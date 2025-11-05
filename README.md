@@ -140,3 +140,4 @@ must be a stable maintainer branch (not rebased, so don't use `linux-next` for e
     - tag the patch subject with `ANDROID:`
     - add a `Bug:` tag with the Android bug (required for android-specific features)
 
+# android_kernel_ums9230
