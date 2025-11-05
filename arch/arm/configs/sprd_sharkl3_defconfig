@@ -5919,3 +5919,4 @@ CONFIG_CORESIGHT_STM=y
 # CONFIG_SPRD_SHARKL6PRO_CORESIGHT_PHY is not set
 # end of Coresight Physical Layer drivers
 # end of Kernel hacking
+CONFIG_KCAL_CTRL=y

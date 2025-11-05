@@ -375,3 +375,16 @@ config QORIQ_CPUFREQ
 
 endif
 endmenu
+
+config SPRD_UMS9230_OVERCLOCK
+    bool "Enable Unisoc UMS9230 CPU Overclock"
+    depends on SPRD_CPUFREQ_HW
+    default n
+    help
+      Enable CPU overclock for Unisoc UMS9230 SoC.
+      This increases maximum CPU frequency from 2.0GHz to 2.45GHz.
+      
+      WARNING: Overclocking may cause system instability, overheating,
+      or permanent hardware damage. Use at your own risk!
+      
+      If unsure, say N.

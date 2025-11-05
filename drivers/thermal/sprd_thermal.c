@@ -554,3 +554,16 @@ module_platform_driver(sprd_thermal_driver);
 MODULE_AUTHOR("Freeman Liu <freeman.liu@unisoc.com>");
 MODULE_DESCRIPTION("Spreadtrum thermal driver");
 MODULE_LICENSE("GPL v2");
+
+/* Thermal Throttling Adjustment for Overclock */
+static __maybe_unused int ums9230_thermal_oc_adjust(struct thermal_zone_device *tz, int temp)
+// ^^^^^^^^^^^^^^^^
+{
+    /* Increase thermal threshold for overclock stability */
+    if (temp < 75000) /* 75°C */
+        return 0;
+    else if (temp < 85000) /* 85°C */
+        return 1;
+    else
+        return 2;
+}

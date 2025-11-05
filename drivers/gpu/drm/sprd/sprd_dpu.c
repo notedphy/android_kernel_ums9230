@@ -4,16 +4,27 @@
  */
 
 #include <linux/component.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/dma-buf.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/module.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/of.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/of_address.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/of_device.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/of_irq.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/pm_runtime.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/mm.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/sprd_iommu.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/memblock.h>
+#include <linux/kcal_ctrl.h>
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc_helper.h>
@@ -245,6 +256,13 @@ static int sprd_dpu_enable_vblank(struct sprd_crtc *crtc)
 	if (dpu->core->enable_vsync)
 		dpu->core->enable_vsync(&dpu->ctx);
 
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	return 0;
 }
 
@@ -435,6 +453,13 @@ static int sprd_dpu_irq_request(struct sprd_dpu *dpu)
 	ctx->irq = irq_num;
 	ctx->dpu_isr = sprd_dpu_isr;
 
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	return 0;
 }
 
@@ -484,6 +509,13 @@ static int sprd_dpu_bind(struct device *dev, struct device *master, void *data)
 
 	dpu->dsi = sprd_dpu_dsi_attach(dpu);
 
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	return 0;
 }
 
@@ -519,6 +551,13 @@ static int sprd_dpu_device_create(struct sprd_dpu *dpu,
 		return ret;
 	}
 
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	return 0;
 }
 
@@ -533,6 +572,13 @@ static int of_get_logo_memory_info(struct sprd_dpu *dpu,
 	node = of_parse_phandle(np, "sprd,logo-memory", 0);
 	if (!node) {
 		DRM_INFO("no sprd,logo-memory specified\n");
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 		return 0;
 	}
 
@@ -545,6 +591,13 @@ static int of_get_logo_memory_info(struct sprd_dpu *dpu,
 
 	ctx->logo_addr = r.start;
 	ctx->logo_size = resource_size(&r);
+
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
 
 	return 0;
 }
@@ -588,6 +641,13 @@ static int sprd_dpu_context_init(struct sprd_dpu *dpu,
 	ctx->secure_debug = false;
 
 	init_waitqueue_head(&dpu->ctx.te_wq);
+
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
 
 	return 0;
 }
@@ -696,7 +756,21 @@ static int sprd_dpu_probe(struct platform_device *pdev)
 
 static int sprd_dpu_remove(struct platform_device *pdev)
 {
+
+	/* Remove KCAL sysfs */
+	device_remove_file(&pdev->dev, &dev_attr_kcal);
+	device_remove_file(&pdev->dev, &dev_attr_kcal_min);
+	device_remove_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_remove_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	component_del(&pdev->dev, &dpu_component_ops);
+
+	/* KCAL sysfs */
+	device_create_file(&pdev->dev, &dev_attr_kcal);
+	device_create_file(&pdev->dev, &dev_attr_kcal_min);
+	device_create_file(&pdev->dev, &dev_attr_kcal_enable);
+	device_create_file(&pdev->dev, &dev_attr_kcal_invert);
+
 	return 0;
 }
 

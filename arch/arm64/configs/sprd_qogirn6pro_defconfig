@@ -6385,3 +6385,4 @@ CONFIG_CORESIGHT_PHY=y
 CONFIG_SPRD_SHARKL6PRO_CORESIGHT_PHY=y
 # end of Coresight Physical Layer drivers
 # end of Kernel hacking
+CONFIG_KCAL_CTRL=y

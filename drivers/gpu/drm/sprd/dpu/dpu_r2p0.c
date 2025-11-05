@@ -5,9 +5,13 @@
 
 #include <drm/drm_vblank.h>
 #include <linux/delay.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/io.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/wait.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/workqueue.h>
+#include <linux/kcal_ctrl.h>
 
 #include "sprd_crtc.h"
 #include "sprd_corner.h"

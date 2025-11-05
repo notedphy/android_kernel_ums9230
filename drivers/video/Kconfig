@@ -48,3 +48,10 @@ endif
 
 
 endmenu
+
+config KCAL_CTRL
+    bool "KCAL Display Color Calibration"
+    default y
+    help
+      Enable KCAL display color calibration support.
+      This allows userspace to control display RGB values.

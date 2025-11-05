@@ -5,18 +5,31 @@
 
 #include <drm/drm_vblank.h>
 #include <linux/apsys_dvfs.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/delay.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/dma-buf.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/gfp.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/module.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/io.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/wait.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/workqueue.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/backlight.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/of_address.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/slab.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/string.h>
+#include <linux/kcal_ctrl.h>
 #include <linux/trusty/smcall.h>
+#include <linux/kcal_ctrl.h>
 #include <drm/drm_prime.h>
 
 #include "dpu_enhance_param.h"
