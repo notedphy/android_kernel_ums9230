@@ -1,5 +1,7 @@
+armm=$(pwd)/arm-linux-androideabi-4.9-12-5/bin/arm-linux-androideabi-
+clang=$(pwd)/clang/bin
 export PATH="$(pwd)/clang/bin:$(pwd)/aarch64-linux-android-4.9-12-5/bin:${PATH}"
-make unisoc_defconfig O=out \
+make mikahunter_defconfig O=out \
             ARCH=arm64 \
             LLVM=1 \
             CC=clang\
