@@ -41,6 +41,32 @@ config DEVFREQ_GOV_SIMPLE_ONDEMAND
 	  values that imply the usage rate. A device may provide tuned
 	  values to the governor with data field at devfreq_add_device().
 
+
+config CPU_FREQ_GOV_MIKASA
+        tristate "'mikasa' cpufreq policy governor for extreme performance"
+      depends on CPU_FREQ
+        select CPU_FREQ_GOV_ATTR_SET
+        select IRQ_WORK
+        help
+          'mikasa' - Extreme performance CPUFreq governor optimized for Android
+          gaming and performance-intensive workloads.
+
+          This governor provides aggressive frequency scaling, intelligent CPU
+          hotplug management, and responsive touch boost capabilities to deliver
+          the best possible performance for demanding applications.
+
+          Features:
+          - Aggressive frequency scaling with 20ms sampling rate
+          - Touch boost for instant response on user interactions
+          - Smart CPU hotplug management (minimum 2 cores online)
+          - Gaming detection with sustained boost periods
+          - Load-aware multi-level frequency optimization
+
+          To compile this driver as a module, choose M here: the
+          module will be called mikasa_governor.
+          For details, take a look at Documentation/cpu-freq.
+          If in doubt, say Y.
+
 config SPRD_HW_DEVICE_DVFS_CP
 	tristate "Unisoc CP dvfs driver"
 #	depends on SPRD_SIPC
