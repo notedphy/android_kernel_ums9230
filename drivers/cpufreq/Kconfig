@@ -373,5 +373,43 @@ config QORIQ_CPUFREQ
 	  This adds the CPUFreq driver support for Freescale QorIQ SoCs
 	  which are capable of changing the CPU's frequency dynamically.
 
+config CPU_FREQ_DEFAULT_GOV_MIKASA
+	bool "mikasa"
+	select CPU_FREQ_GOV_MIKASA
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  Use the CPUFreq governor 'mikasa' as default. This allows
+	  you to get extreme performance for gaming and performance-intensive
+	  workloads by simply loading your cpufreq low-level hardware driver.
+
+	  Be aware that not all cpufreq drivers support the mikasa
+	  governor. If unsure have a look at the help section of the
+	  driver. Fallback governor will be the performance governor
+
+ config CPU_FREQ_GOV_MIKASA
+	tristate "'mikasa' cpufreq policy governor for extreme performance"
+      depends on CPU_FREQ
+	select CPU_FREQ_GOV_ATTR_SET
+	select IRQ_WORK
+	help
+	  'mikasa' - Extreme performance CPUFreq governor optimized for Android
+	  gaming and performance-intensive workloads.
+
+	  This governor provides aggressive frequency scaling, intelligent CPU
+	  hotplug management, and responsive touch boost capabilities to deliver
+	  the best possible performance for demanding applications.
+
+	  Features:
+	  - Aggressive frequency scaling with 20ms sampling rate
+	  - Touch boost for instant response on user interactions
+	  - Smart CPU hotplug management (minimum 2 cores online)
+	  - Gaming detection with sustained boost periods
+	  - Load-aware multi-level frequency optimization
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called mikasa_governor.
+	  For details, take a look at Documentation/cpu-freq.
+	  If in doubt, say Y.
+
 endif
 endmenu
