@@ -2,7 +2,7 @@
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 5.4.254 Kernel Configuration
 #
-CONFIG_CC_VERSION_TEXT="Android (7284624, based on r416183b) clang version 12.0.5 (https://android.googlesource.com/toolchain/llvm-project c935d99d7cf2016289302412d708641d52d2f7ee)"
+CONFIG_CC_VERSION_TEXT="Android (7284624, based on r416183b=y clang version 12.0.5 (https://android.googlesource.com/toolchain/llvm-project c935d99d7cf2016289302412d708641d52d2f7ee=y"
 CONFIG_GCC_VERSION=0
 CONFIG_CC_IS_CLANG=y
 CONFIG_LD_IS_LLD=y
@@ -23,14 +23,22 @@ CONFIG_THREAD_INFO_IN_TASK=y
 CONFIG_INIT_ENV_ARG_LIMIT=32
 # CONFIG_COMPILE_TEST is not set
 CONFIG_UAPI_HEADER_TEST=y
-CONFIG_LOCALVERSION="-Massatriof16"
+CONFIG_LOCALVERSION="-MIKASA•[ZTMY]"
 CONFIG_LOCALVERSION_AUTO=y
 CONFIG_BUILD_SALT=""
-CONFIG_DEFAULT_HOSTNAME="(none)"
+CONFIG_DEFAULT_HOSTNAME="(none=y"
 CONFIG_SWAP=y
 # CONFIG_SYSVIPC is not set
 # CONFIG_POSIX_MQUEUE is not set
 CONFIG_CROSS_MEMORY_ATTACH=y
+CONFIG_MQ_IOSCHED_DEADLINE=y
+CONFIG_MQ_IOSCHED_KYBER=y
+CONFIG_IOSCHED_BFQ=y       
+CONFIG_IOSCHED_ZEN=n
+CONFIG_IOSCHED_MAPLE=n
+CONFIG_IOSCHED_ANXIETY=n
+CONFIG_IOSCHED_FIOPS=n
+CONFIG_IOSCHED_SIO=n
 # CONFIG_USELIB is not set
 CONFIG_AUDIT=y
 CONFIG_HAVE_ARCH_AUDITSYSCALL=y
@@ -569,7 +577,7 @@ CONFIG_ARM_PSCI_FW=y
 # CONFIG_GOOGLE_FIRMWARE is not set
 
 #
-# EFI (Extensible Firmware Interface) Support
+# EFI (Extensible Firmware Interface=y Support
 #
 # CONFIG_EFI_VARS is not set
 CONFIG_EFI_ESRT=y
@@ -580,7 +588,7 @@ CONFIG_EFI_ARMSTUB=y
 # CONFIG_EFI_CAPSULE_LOADER is not set
 # CONFIG_EFI_TEST is not set
 # CONFIG_RESET_ATTACK_MITIGATION is not set
-# end of EFI (Extensible Firmware Interface) Support
+# end of EFI (Extensible Firmware Interface=y Support
 
 CONFIG_EFI_EARLYCON=y
 
@@ -731,13 +739,13 @@ CONFIG_ARCH_HAS_GCOV_PROFILE_ALL=y
 # end of GCOV-based kernel profiling
 
 #
-# Profile Guided Optimization (PGO) (EXPERIMENTAL)
+# Profile Guided Optimization (PGO=y (EXPERIMENTAL=y
 #
 CONFIG_ARCH_SUPPORTS_PGO_CLANG=y
 # CONFIG_PGO_NONE is not set
 # CONFIG_PGO_CLANG is not set
 CONFIG_USE_PROFILE=y
-# end of Profile Guided Optimization (PGO) (EXPERIMENTAL)
+# end of Profile Guided Optimization (PGO=y (EXPERIMENTAL=y
 
 CONFIG_HAVE_GCC_PLUGINS=y
 # end of General architecture-dependent options
@@ -1786,7 +1794,7 @@ CONFIG_OP_RF_CABLE_MONITOR=m
 #
 
 #
-# Intel MIC Coprocessor State Management (COSM) Drivers
+# Intel MIC Coprocessor State Management (COSM=y Drivers
 #
 
 #
@@ -1815,7 +1823,7 @@ CONFIG_SCSI_DMA=y
 # CONFIG_SCSI_PROC_FS is not set
 
 #
-# SCSI support type (disk, tape, CD-ROM)
+# SCSI support type (disk, tape, CD-ROM=y
 #
 CONFIG_BLK_DEV_SD=y
 # CONFIG_CHR_DEV_ST is not set
@@ -1940,11 +1948,11 @@ CONFIG_DM_USER=y
 # CONFIG_FUSION is not set
 
 #
-# IEEE 1394 (FireWire) support
+# IEEE 1394 (FireWire=y support
 #
 # CONFIG_FIREWIRE is not set
 # CONFIG_FIREWIRE_NOSY is not set
-# end of IEEE 1394 (FireWire) support
+# end of IEEE 1394 (FireWire=y support
 
 CONFIG_NETDEVICES=y
 CONFIG_MII=y
@@ -2112,7 +2120,7 @@ CONFIG_WLAN=y
 # CONFIG_VIRT_WIFI is not set
 
 #
-# Enable WiMAX (Networking options) to see the WiMAX drivers
+# Enable WiMAX (Networking options=y to see the WiMAX drivers
 #
 # CONFIG_WAN is not set
 # CONFIG_VMXNET3 is not set
@@ -2490,7 +2498,7 @@ CONFIG_I2C_ALGOBIT=y
 # CONFIG_I2C_VIAPRO is not set
 
 #
-# I2C system bus drivers (mostly embedded / system-on-chip)
+# I2C system bus drivers (mostly embedded / system-on-chip=y
 #
 # CONFIG_I2C_CADENCE is not set
 # CONFIG_I2C_CBUS_GPIO is not set
@@ -3143,7 +3151,7 @@ CONFIG_USB_GSPCA=y
 # CONFIG_VIDEO_USBTV is not set
 
 #
-# Webcam, TV (analog/digital) USB devices
+# Webcam, TV (analog/digital=y USB devices
 #
 # CONFIG_VIDEO_EM28XX is not set
 
@@ -3177,7 +3185,7 @@ CONFIG_VIDEOBUF2_DMA_CONTIG=y
 CONFIG_VIDEOBUF2_VMALLOC=y
 
 #
-# Media ancillary drivers (tuners, sensors, i2c, spi, frontends)
+# Media ancillary drivers (tuners, sensors, i2c, spi, frontends=y
 #
 # CONFIG_MEDIA_SUBDRV_AUTOSELECT is not set
 # CONFIG_VIDEO_IR_I2C is not set
@@ -3402,9 +3410,9 @@ CONFIG_DRM_KMS_CMA_HELPER=y
 # CONFIG_DRM_AMDGPU is not set
 
 #
-# ACP (Audio CoProcessor) Configuration
+# ACP (Audio CoProcessor=y Configuration
 #
-# end of ACP (Audio CoProcessor) Configuration
+# end of ACP (Audio CoProcessor=y Configuration
 
 # CONFIG_DRM_NOUVEAU is not set
 # CONFIG_DRM_VGEM is not set
@@ -4313,7 +4321,7 @@ CONFIG_LEDS_SC27XX_BLTC=m
 # CONFIG_LEDS_SC27XX_KEYPAD is not set
 
 #
-# LED driver for blink(1) USB RGB LED is under Special HID drivers (HID_THINGM)
+# LED driver for blink(1=y USB RGB LED is under Special HID drivers (HID_THINGM=y
 #
 # CONFIG_LEDS_BLINKM is not set
 # CONFIG_LEDS_SYSCON is not set
@@ -4336,7 +4344,7 @@ CONFIG_LEDS_TRIGGER_TIMER=y
 # CONFIG_LEDS_TRIGGER_DEFAULT_ON is not set
 
 #
-# iptables trigger is under Netfilter config (LED target)
+# iptables trigger is under Netfilter config (LED target=y
 #
 # CONFIG_LEDS_TRIGGER_TRANSIENT is not set
 # CONFIG_LEDS_TRIGGER_CAMERA is not set
@@ -4765,7 +4773,7 @@ CONFIG_RPMSG_CHAR=y
 # CONFIG_SOUNDWIRE is not set
 
 #
-# SOC (System On Chip) specific Drivers
+# SOC (System On Chip=y specific Drivers
 #
 
 #
@@ -4879,7 +4887,7 @@ CONFIG_SPRD_TIME_SYNC_CP=m
 CONFIG_OPLUS_FEATURE_PHOENIX=y
 CONFIG_OPLUS_FEATURE_HUNG_TASK_ENHANCE=m
 CONFIG_OPLUS_FEATURE_DEATH_HEALER=m
-# end of SOC (System On Chip) specific Drivers
+# end of SOC (System On Chip=y specific Drivers
 
 CONFIG_PM_DEVFREQ=y
 
@@ -5110,11 +5118,11 @@ CONFIG_SC27XX_ADC=m
 # end of Clock Generator/Distribution
 
 #
-# Phase-Locked Loop (PLL) frequency synthesizers
+# Phase-Locked Loop (PLL=y frequency synthesizers
 #
 # CONFIG_ADF4350 is not set
 # CONFIG_ADF4371 is not set
-# end of Phase-Locked Loop (PLL) frequency synthesizers
+# end of Phase-Locked Loop (PLL=y frequency synthesizers
 # end of Frequency Synthesizers DDS/PLL
 
 #
@@ -6259,7 +6267,7 @@ CONFIG_SCHEDSTATS=y
 # CONFIG_DEBUG_PREEMPT is not set
 
 #
-# Lock Debugging (spinlocks, mutexes, etc...)
+# Lock Debugging (spinlocks, mutexes, etc...=y
 #
 CONFIG_LOCK_DEBUGGING_SUPPORT=y
 # CONFIG_PROVE_LOCKING is not set
@@ -6274,7 +6282,7 @@ CONFIG_LOCK_DEBUGGING_SUPPORT=y
 # CONFIG_DEBUG_LOCKING_API_SELFTESTS is not set
 # CONFIG_LOCK_TORTURE_TEST is not set
 # CONFIG_WW_MUTEX_SELFTEST is not set
-# end of Lock Debugging (spinlocks, mutexes, etc...)
+# end of Lock Debugging (spinlocks, mutexes, etc...=y
 
 CONFIG_STACKTRACE=y
 # CONFIG_WARN_ALL_UNSEEDED_RANDOM is not set
