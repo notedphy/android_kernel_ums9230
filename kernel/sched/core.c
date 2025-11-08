@@ -5790,7 +5790,7 @@ out_unlock:
 	return retval;
 }
 
-static bool task_is_unity_game(struct task_struct *p)
+static bool __maybe_unused task_is_unity_game(struct task_struct *p)
 {
 	struct task_struct *t;
 	bool ret = false;
