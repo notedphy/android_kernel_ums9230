@@ -23,12 +23,6 @@ obj-$(CONFIG_BLK_CGROUP_IOCOST)	+= blk-iocost.o
 obj-$(CONFIG_MQ_IOSCHED_DEADLINE)	+= mq-deadline.o
 obj-$(CONFIG_MQ_IOSCHED_KYBER)	+= kyber-iosched.o
 bfq-y				:= bfq-iosched.o bfq-wf2q.o bfq-cgroup.o
-obj-$(CONFIG_IOSCHED_BFQ)	+= bfq.o
-obj-$(CONFIG_IOSCHED_ZEN)       += zen-iosched.o
-obj-$(CONFIG_IOSCHED_MAPLE)	+= maple-iosched.o
-obj-$(CONFIG_IOSCHED_ANXIETY)	+= anxiety-iosched.o
-obj-$(CONFIG_IOSCHED_FIOPS)     += fiops-iosched.o
-obj-$(CONFIG_IOSCHED_SIO)       += sio-iosched.o
 
 obj-$(CONFIG_IOSCHED_SWITCHER) += iosched_switcher.o
 obj-$(CONFIG_BLOCK_COMPAT)	+= compat_ioctl.o
