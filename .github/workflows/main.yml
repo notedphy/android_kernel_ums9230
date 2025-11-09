@@ -1,0 +1,108 @@
+name: Build Android kernel
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  # adjust these as needed
+  KERNEL_DIR: ${{ github.workspace }}        # path to kernel source (repo root by default)
+  TOOLCHAIN_DIR: ${{ github.workspace }}/toolchain
+  CLANG_TARBALL_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-12.0.0_r12/clang-r416183b.tar.gz
+  DEFCONFIG: mikasa_defconfig
+  ARCH: arm64
+  OUTDIR: ${{ github.workspace }}/out
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install host deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison flex libssl-dev libncurses-dev build-essential wget python3
+
+      - name: Download + extract AOSP Clang (r416183b)
+        run: |
+          mkdir -p "${{ env.TOOLCHAIN_DIR }}"
+          echo "Downloading clang from: $CLANG_TARBALL_URL"
+          wget -qO clang.tar.gz "$CLANG_TARBALL_URL"
+          tar -xzf clang.tar.gz -C "${{ env.TOOLCHAIN_DIR }}" --strip-components=1
+          rm clang.tar.gz
+          ls -lah "${{ env.TOOLCHAIN_DIR }}" | sed -n '1,20p'
+
+      - name: Prepare environment
+        # keep everything in one script so PATH and exports persist for build step
+        run: |
+          set -euo pipefail
+          cd "${{ env.KERNEL_DIR }}"
+
+          # ensure out dir
+          mkdir -p "${OUTDIR}"
+
+          # put clang toolchain first on PATH
+          export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
+
+          # Common vars for clang-based kernel builds
+          export ARCH=${{ env.ARCH }}
+          export DEFCONFIG=${{ env.DEFCONFIG }}
+          # Use the AOSP/LLVM triple for target (adjust if you have a different cross prefix)
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          # CROSS_COMPILE may still be needed for helpers (binutils). If you provide separate cross toolchain,
+          # set CROSS_COMPILE to that prefix (e.g. aarch64-linux-gnu-). Here we rely on clang+ld from prebuilts.
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
+
+          echo "Using PATH: $(which clang || true) ; clang version: $(clang --version | head -n1 || true)"
+
+          # Create defconfig
+          make O="${OUTDIR}" ${DEFCONFIG}
+
+          # Build kernel Image (single-step build). Adjust -j as needed.
+          NPROCS=$(nproc --all || echo 2)
+          make -C . O="${OUTDIR}" -j${NPROCS} \
+            ARCH=${ARCH} \
+            CC=clang LLVM=1 \
+            CLANG_TRIPLE=${CLANG_TRIPLE} \
+            CROSS_COMPILE=${CROSS_COMPILE} \
+            Image
+
+          # copy result to workspace root with predictable name
+          mkdir -p "${{ github.workspace }}/release"
+          if [ -f "${OUTDIR}/arch/arm64/boot/Image" ]; then
+            cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
+          else
+            echo "Error: built Image not found at ${OUTDIR}/arch/arm64/boot/Image"
+            ls -lah "${OUTDIR}/arch/arm64/boot" || true
+            exit 1
+          fi
+
+          echo "Image saved to release/Image-${GITHUB_RUN_NUMBER}.img"
+
+      - name: List release files
+        run: ls -lah "${{ github.workspace }}/release"
+
+      - name: Create GitHub Release and upload Image
+        # softprops/action-gh-release will create a release and upload files declared in `files`
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "kernel-image-${{ github.run_number }}"
+          tag_name: "kernel-image-${{ github.run_number }}"
+          body: "Automated kernel build (clang-r416183b) - Image for ${DEFCONFIG}"
+          files: release/*.img
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact (fallback / for Actions UI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-image
+          path: release/*.img
