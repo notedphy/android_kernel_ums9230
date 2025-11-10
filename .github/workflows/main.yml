@@ -16,7 +16,7 @@ env:
   DEFCONFIG: mikasa_defconfig
   ARCH: arm64
   OUTDIR: ${{ github.workspace }}/out
-  LOCALVERSION: -MIKΛƧΛ ᄂIGΉƬ [ЯΣV]
+  
 
 jobs:
   build:
@@ -70,7 +70,6 @@ jobs:
           export DEFCONFIG=${{ env.DEFCONFIG }}
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CLANG_TRIPLE=aarch64-linux-gnu-
-          export LOCALVERSION=${{ env.LOCALVERSION }}
           export CC="${TOOLCHAIN_BIN}/clang"
           export LD="${TOOLCHAIN_BIN}/ld.lld"
           export LLVM=1
