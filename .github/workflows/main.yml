@@ -78,7 +78,7 @@ jobs:
         run: |
           echo "🚀 Integrating KernelSU-Next..."
           cd "${{ env.KERNEL_DIR }}"
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s main
           if ! grep -q "CONFIG_KSU=y" arch/arm64/configs/${{ env.DEFCONFIG }}; then
             echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
           fi
