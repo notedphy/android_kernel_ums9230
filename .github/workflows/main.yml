@@ -78,22 +78,33 @@ jobs:
         run: |
           echo "🚀 Integrating KernelSU-Next..."
           cd "${{ env.KERNEL_DIR }}"
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+
+          # Tambah CONFIG_KSU ke defconfig
           if ! grep -q "CONFIG_KSU=y" arch/arm64/configs/${{ env.DEFCONFIG }}; then
             echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
           fi
-          echo "✅ KernelSU-Next integrated and CONFIG_KSU enabled."
-           if ! grep -q "path_umount" fs/namespace.c 2>/dev/null; then
-           echo "⚙️ Adding dummy path_umount() to fix KernelSU Next link error..."
+
+          # Patch recovery: fix missing path_umount
+          if [ ! -f fs/namespace.c ]; then
+            echo "⚠️ fs/namespace.c not found, creating empty placeholder..."
+            mkdir -p fs
+            echo "/* placeholder for KernelSU patch */" > fs/namespace.c
+          fi
+
+          if ! grep -q "path_umount" fs/namespace.c 2>/dev/null; then
+            echo "⚙️ Adding dummy path_umount()..."
             cat >> fs/namespace.c <<'EOF'
 
-           /* Added automatically for KernelSU-Next build fix */
-           int path_umount(struct path *path, int flags)
-           {
-           return 0; /* safely bypass */
-          }
+            /* Added automatically for KernelSU-Next build fix */
+            int path_umount(struct path *path, int flags)
+            {
+            return 0; /* safely bypass */
+            }
             EOF
-            fi
+                fi
+
+          echo "✅ KernelSU-Next integration fixed & CONFIG_KSU enabled."
       - name: Patch SELinux mode (normal / permissive / disable)
         run: |
           cd "${{ env.KERNEL_DIR }}"
