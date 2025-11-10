@@ -1,4 +1,4 @@
-name: Build Mikasa Kernel
+name: Build Android Kernel mikasa 
 
 on:
   workflow_dispatch:
@@ -11,6 +11,16 @@ on:
         options:
           - "false"
           - "true"
+
+      selinux_mode:
+        description: "SELinux mode: normal, permissive, or disable"
+        required: true
+        default: "normal"
+        type: choice
+        options:
+          - "normal"
+          - "permissive"
+          - "disable"
 
 permissions:
   contents: write
@@ -63,20 +73,48 @@ jobs:
           sudo swapon /swapfile
           free -h
 
-      - name: Integrate KernelSU-Next (via curl setup.sh)
+      - name: Integrate KernelSU-Next (optional)
         if: ${{ github.event.inputs.with_kernelsu == 'true' }}
         run: |
-          echo "🚀 Integrating KernelSU-Next using official setup.sh..."
+          echo "🚀 Integrating KernelSU-Next..."
           cd "${{ env.KERNEL_DIR }}"
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
-          echo "✅ KernelSU-Next integration done."
-
-      - name: Verify defconfig file
-        run: |
-          if [ ! -f "arch/arm64/configs/${{ env.DEFCONFIG }}" ]; then
-            echo "❌ File arch/arm64/configs/${{ env.DEFCONFIG }} tidak ditemukan!"
-            exit 1
+          if ! grep -q "CONFIG_KSU=y" arch/arm64/configs/${{ env.DEFCONFIG }}; then
+            echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
           fi
+          echo "✅ KernelSU-Next integrated and CONFIG_KSU enabled."
+
+      - name: Patch SELinux mode (normal / permissive / disable)
+        run: |
+          cd "${{ env.KERNEL_DIR }}"
+          case "${{ github.event.inputs.selinux_mode }}" in
+            permissive)
+              echo "⚙️ Applying SELinux permissive patch..."
+              if grep -q "enforcing =" security/selinux/hooks.c 2>/dev/null; then
+                sed -i 's/enforcing = 1/enforcing = 0/g' security/selinux/hooks.c || true
+              fi
+              if grep -q "selinux_enforcing_setup" security/selinux/hooks.c 2>/dev/null; then
+                sed -i '/selinux_enforcing_setup/a\tenforcing = 0;' security/selinux/hooks.c || true
+              fi
+              if ! grep -q "CONFIG_SECURITY_SELINUX_DISABLE=y" arch/arm64/configs/${{ env.DEFCONFIG }}; then
+                echo "CONFIG_SECURITY_SELINUX_DISABLE=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
+              fi
+              echo "✅ SELinux patched to permissive mode."
+              ;;
+            disable)
+              echo "🚫 Disabling SELinux completely..."
+              {
+                echo "CONFIG_SECURITY_SELINUX=n"
+                echo "CONFIG_SECURITY_SELINUX_DISABLE=y"
+                echo "CONFIG_SECURITY_SELINUX_BOOTPARAM=y"
+                echo "CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=0"
+              } >> arch/arm64/configs/${{ env.DEFCONFIG }}
+              echo "✅ SELinux disabled at kernel level."
+              ;;
+            normal)
+              echo "🔒 Keeping SELinux enforcing (default)."
+              ;;
+          esac
 
       - name: Build kernel Image
         run: |
@@ -97,12 +135,11 @@ jobs:
 
           echo "=== Checking Clang Toolchain ==="
           "${CC}" --version | head -n 3
-          "${LD}" --version | head -n 3
 
           echo "=== Generating defconfig: $DEFCONFIG ==="
           make O="${OUTDIR}" ${DEFCONFIG}
 
-          echo "=== Building kernel Image (limited threads) ==="
+          echo "=== Building kernel Image ==="
           make -C . O="${OUTDIR}" -j4 \
             ARCH=${ARCH} \
             CC="${CC}" \
@@ -118,23 +155,19 @@ jobs:
           mkdir -p "${{ github.workspace }}/release"
           cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
 
-      - name: Create GitHub Release and upload Image
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: |
-            Kernel Image build #${{ github.run_number }}${{ github.event.inputs.with_kernelsu == 'true' && ' (with KernelSU Next)' || '' }}
+            Kernel Image #${{ github.run_number }} (${{ github.event.inputs.selinux_mode }})
           tag_name: kernel-${{ github.run_number }}
           body: |
-            ✅ Android kernel build using **AOSP Clang r416183b**
+            ✅ Android kernel built with:
+            - **AOSP Clang r416183b**
             - **ARCH:** arm64
             - **DEFCONFIG:** mikasa_defconfig
             - **KernelSU Next:** ${{ github.event.inputs.with_kernelsu }}
+            - **SELinux mode:** ${{ github.event.inputs.selinux_mode }}
           files: release/*.img
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifact (for workflow UI)
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-Image
-          path: release/*.img
