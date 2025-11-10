@@ -1,4 +1,4 @@
-name: Build Mikasa kernel
+name: Build Mikasa Kernel
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: write  # needed for creating release
+  contents: write  # diperlukan untuk membuat GitHub Release
 
 env:
   KERNEL_DIR: ${{ github.workspace }}
@@ -16,7 +16,7 @@ env:
   DEFCONFIG: mikasa_defconfig
   ARCH: arm64
   OUTDIR: ${{ github.workspace }}/out
-  LOCALVERSION: -MIKASA•[ZTMY]
+  LOCALVERSION: -MIKΛƧΛ ᄂIGΉƬ [ЯΣV]
 
 jobs:
   build:
@@ -29,9 +29,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Install full dependencies
         run: |
-          sudo apt update -y && sudo apt upgrade -y && sudo apt install apt-utils rlwrap dialog -y && sudo apt install libterm-readline-perl-perl -y && sudo apt install nano bc bison ca-certificates curl flex gcc git libc6-dev libssl-dev openssl python-is-python3 ssh wget zip zstd sudo make clang gcc-arm-linux-gnueabi software-properties-common build-essential libarchive-tools gcc-aarch64-linux-gnu -y && sudo apt install build-essential -y && sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev make gcc -y && sudo apt install pigz -y && sudo apt install python3 -y && sudo apt install cpio -y && sudo apt install lld -y && sudo apt install llvm -y && sudo apt-get install g++-aarch64-linux-gnu -y && sudo apt install libelf-dev -y
+          sudo apt update -y && sudo apt upgrade -y
+          sudo apt install apt-utils rlwrap dialog -y
+          sudo apt install libterm-readline-perl-perl -y
+          sudo apt install nano bc bison ca-certificates curl flex gcc git libc6-dev libssl-dev openssl \
+            python-is-python3 ssh wget zip zstd sudo make clang gcc-arm-linux-gnueabi software-properties-common \
+            build-essential libarchive-tools gcc-aarch64-linux-gnu -y
+          sudo apt install build-essential -y
+          sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev \
+            libbz2-dev libsqlite3-dev make gcc -y
+          sudo apt install pigz -y
+          sudo apt install python3 -y
+          sudo apt install cpio -y
+          sudo apt install lld -y
+          sudo apt install llvm -y
+          sudo apt-get install g++-aarch64-linux-gnu -y
+          sudo apt install libelf-dev -y
+
       - name: Download and extract AOSP Clang (r416183b)
         run: |
           mkdir -p "${{ env.TOOLCHAIN_DIR }}"
@@ -42,31 +58,29 @@ jobs:
           echo "Extracted clang to ${{ env.TOOLCHAIN_DIR }}"
           ls -lah "${{ env.TOOLCHAIN_DIR }}/bin" | head -n 20
 
-      - name: Build kernel Image
+      - name: Build kernel Image (force AOSP clang)
         run: |
           set -euo pipefail
           cd "${{ env.KERNEL_DIR }}"
           mkdir -p "${OUTDIR}"
 
-          # ensure AOSP clang is first in PATH
-          export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
+          TOOLCHAIN_BIN="${{ env.TOOLCHAIN_DIR }}/bin"
 
-          # setup env
           export ARCH=${{ env.ARCH }}
           export DEFCONFIG=${{ env.DEFCONFIG }}
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CLANG_TRIPLE=aarch64-linux-gnu-
           export LOCALVERSION=${{ env.LOCALVERSION }}
-          export CC=clang
-          export LD=ld.lld
+          export CC="${TOOLCHAIN_BIN}/clang"
+          export LD="${TOOLCHAIN_BIN}/ld.lld"
           export LLVM=1
           export LLVM_IAS=1
 
-          echo "=== Checking toolchain ==="
-          which clang
-          clang --version | head -n 3
-          echo
-          which ld.lld || true
+          echo "=== Checking AOSP Clang ==="
+          echo "Clang path: $CC"
+          "$CC" --version | head -n3
+          echo "LD path: $LD"
+          "$LD" --version | head -n3
 
           echo "=== Generating defconfig: $DEFCONFIG ==="
           make O="${OUTDIR}" ${DEFCONFIG}
@@ -74,8 +88,8 @@ jobs:
           echo "=== Building kernel Image ==="
           make -C . O="${OUTDIR}" -j$(nproc --all) \
             ARCH=${ARCH} \
-            CC=clang \
-            LD=ld.lld \
+            CC="${CC}" \
+            LD="${LD}" \
             LLVM=1 LLVM_IAS=1 \
             CLANG_TRIPLE=${CLANG_TRIPLE} \
             CROSS_COMPILE=${CROSS_COMPILE} \
@@ -87,21 +101,23 @@ jobs:
           mkdir -p "${{ github.workspace }}/release"
           cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
 
+          echo "File saved to release/Image-${GITHUB_RUN_NUMBER}.img"
+
       - name: Create GitHub Release and upload Image
         uses: softprops/action-gh-release@v1
         with:
           name: "Kernel Image build #${{ github.run_number }}"
           tag_name: "kernel-${{ github.run_number }}"
           body: |
-            Automated kernel build using AOSP Clang r416183b
-            - ARCH: arm64
-            - DEFCONFIG: mikasa_defconfig
-            - LOCALVERSION: -mikasa
+            ✅ build using **AOSP Clang r416183b**
+            - **ARCH:** arm64
+            - **DEFCONFIG:** mikasa_defconfig
+            - **LOCALVERSION:** -mikasa
           files: release/*.img
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifact (optional)
+      - name: Upload artifact (for workflow UI)
         uses: actions/upload-artifact@v4
         with:
           name: kernel-Image
