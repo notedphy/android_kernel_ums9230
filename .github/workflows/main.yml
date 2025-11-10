@@ -73,36 +73,38 @@ jobs:
           sudo swapon /swapfile
           free -h
 
-      - name: Integrate KernelSU-Next (optional)
-        if: ${{ github.event.inputs.with_kernelsu == 'true' }}
+      - name: Integrate KernelSU-Next
         run: |
-          echo "🚀 Integrating KernelSU-Next..."
+          set -euo pipefail
+          echo "🔧 Integrating KernelSU-Next..."
+          
           cd "${{ env.KERNEL_DIR }}"
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
 
-          # Tambah CONFIG_KSU ke defconfig
+          # Enable CONFIG_KSU
           if ! grep -q "CONFIG_KSU=y" arch/arm64/configs/${{ env.DEFCONFIG }}; then
             echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
           fi
 
-          # Patch recovery: fix missing path_umount
+          # Recovery patch for missing path_umount
           if [ ! -f fs/namespace.c ]; then
-            echo "⚠️ fs/namespace.c not found, creating empty placeholder..."
+            echo "⚠️ fs/namespace.c not found, creating placeholder..."
             mkdir -p fs
-            echo "/* placeholder for KernelSU patch */" > fs/namespace.c
+            echo "/* placeholder */" > fs/namespace.c
           fi
 
           if ! grep -q "path_umount" fs/namespace.c 2>/dev/null; then
-            echo "⚙️ Adding dummy path_umount()..."
-            cat >> fs/namespace.c <<'EOF'
+            echo "🧩 Adding dummy path_umount()..."
+            cat << 'EOF' >> fs/namespace.c
+           /* Added automatically for KernelSU-Next build fix */
+           int path_umount(struct path *path, int flags)
+          {
+             return 0;
+          }
+                    EOF
+          fi
 
-            /* Added automatically for KernelSU-Next build fix */
-            int path_umount(struct path *path, int flags)
-            {
-            return 0; /* safely bypass */
-            }
-            EOF
-                fi
+          echo "✅ KernelSU-Next integrated successfully."
 
           echo "✅ KernelSU-Next integration fixed & CONFIG_KSU enabled."
       - name: Patch SELinux mode (normal / permissive / disable)
