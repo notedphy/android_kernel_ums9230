@@ -1,10 +1,10 @@
-name: Build Android Kernel (arm64 - Clang r416183b)
+name: Build Mikasa Kernel
 
 on:
   workflow_dispatch:
     inputs:
       with_kernelsu:
-        description: "Build with KernelSU Next (Sukisu)?"
+        description: "Integrate KernelSU-Next (via curl setup.sh)?"
         required: true
         default: "false"
         type: choice
@@ -51,33 +51,34 @@ jobs:
           mkdir -p "${{ env.TOOLCHAIN_DIR }}"
           cd "${{ env.TOOLCHAIN_DIR }}"
           curl -L "${{ env.CLANG_URL }}" | tar -xz
-          echo "Toolchain extracted successfully."
-          ls -lah "${{ env.TOOLCHAIN_DIR }}/bin" | head -n 20
+          echo "✅ Toolchain extracted successfully."
+          "${{ env.TOOLCHAIN_DIR }}/bin/clang" --version | head -n 3
 
       - name: Enable 4GB Swap
         run: |
-          echo "Creating 4GB swap..."
+          echo "💾 Creating 4GB swap..."
           sudo fallocate -l 4G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
           free -h
 
-      - name: Optionally integrate KernelSU Next (Sukisu)
+      - name: Integrate KernelSU-Next (via curl setup.sh)
         if: ${{ github.event.inputs.with_kernelsu == 'true' }}
         run: |
-          echo "Integrating KernelSU Next (Sukisu)..."
+          echo "🚀 Integrating KernelSU-Next using official setup.sh..."
           cd "${{ env.KERNEL_DIR }}"
-          git clone --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU
-          cd KernelSU
-          git fetch origin main || true
-          git checkout main || git checkout master || true
-          cd ..
-          cp -r KernelSU/kernel/* .
-          echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
-          echo "KernelSU-Next integrated successfully."
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+          echo "✅ KernelSU-Next integration done."
 
-      - name: Build kernel Image (using AOSP clang)
+      - name: Verify defconfig file
+        run: |
+          if [ ! -f "arch/arm64/configs/${{ env.DEFCONFIG }}" ]; then
+            echo "❌ File arch/arm64/configs/${{ env.DEFCONFIG }} tidak ditemukan!"
+            exit 1
+          fi
+
+      - name: Build kernel Image
         run: |
           set -euo pipefail
           cd "${{ env.KERNEL_DIR }}"
