@@ -1,4 +1,4 @@
-name: Build Mikasa Kernel
+name: Build  Mikasa kernel 
 
 on:
   workflow_dispatch:
@@ -7,16 +7,15 @@ on:
       - main
 
 permissions:
-  contents: write  # diperlukan untuk membuat GitHub Release
+  contents: write  # Diperlukan untuk GitHub Release
 
 env:
   KERNEL_DIR: ${{ github.workspace }}
   TOOLCHAIN_DIR: ${{ github.workspace }}/toolchain
-  CLANG_TARBALL_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-12.0.0_r12/clang-r416183b.tar.gz
+  CLANG_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-12.0.0_r12/clang-r416183b.tar.gz
   DEFCONFIG: mikasa_defconfig
   ARCH: arm64
   OUTDIR: ${{ github.workspace }}/out
-  
 
 jobs:
   build:
@@ -24,12 +23,12 @@ jobs:
     timeout-minutes: 120
 
     steps:
-      - name: Checkout source
+      - name: Checkout kernel source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install full dependencies
+      - name: Install dependencies
         run: |
           sudo apt update -y && sudo apt upgrade -y
           sudo apt install apt-utils rlwrap dialog -y
@@ -40,25 +39,19 @@ jobs:
           sudo apt install build-essential -y
           sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev \
             libbz2-dev libsqlite3-dev make gcc -y
-          sudo apt install pigz -y
-          sudo apt install python3 -y
-          sudo apt install cpio -y
-          sudo apt install lld -y
-          sudo apt install llvm -y
-          sudo apt-get install g++-aarch64-linux-gnu -y
-          sudo apt install libelf-dev -y
+          sudo apt install pigz python3 cpio lld llvm g++-aarch64-linux-gnu libelf-dev -y
 
-      - name: Download and extract AOSP Clang (r416183b)
+      - name: Download and extract AOSP Clang r416183b
         run: |
+          echo "Downloading AOSP clang toolchain..."
           mkdir -p "${{ env.TOOLCHAIN_DIR }}"
-          echo "Downloading clang toolchain..."
-          wget -qO clang.tar.gz "${{ env.CLANG_TARBALL_URL }}"
-          tar -xzf clang.tar.gz -C "${{ env.TOOLCHAIN_DIR }}" --strip-components=1
-          rm clang.tar.gz
-          echo "Extracted clang to ${{ env.TOOLCHAIN_DIR }}"
+          cd "${{ env.TOOLCHAIN_DIR }}"
+          # langsung extract tanpa file sementara
+          curl -L "${{ env.CLANG_URL }}" | tar -xz
+          echo "Toolchain extracted:"
           ls -lah "${{ env.TOOLCHAIN_DIR }}/bin" | head -n 20
 
-      - name: Build kernel Image (force AOSP clang)
+      - name: Build kernel Image (using AOSP clang)
         run: |
           set -euo pipefail
           cd "${{ env.KERNEL_DIR }}"
@@ -75,11 +68,9 @@ jobs:
           export LLVM=1
           export LLVM_IAS=1
 
-          echo "=== Checking AOSP Clang ==="
-          echo "Clang path: $CC"
-          "$CC" --version | head -n3
-          echo "LD path: $LD"
-          "$LD" --version | head -n3
+          echo "=== Checking Clang toolchain ==="
+          "${CC}" --version | head -n 3
+          "${LD}" --version | head -n 3
 
           echo "=== Generating defconfig: $DEFCONFIG ==="
           make O="${OUTDIR}" ${DEFCONFIG}
@@ -100,18 +91,15 @@ jobs:
           mkdir -p "${{ github.workspace }}/release"
           cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
 
-          echo "File saved to release/Image-${GITHUB_RUN_NUMBER}.img"
-
       - name: Create GitHub Release and upload Image
         uses: softprops/action-gh-release@v1
         with:
           name: "Kernel Image build #${{ github.run_number }}"
           tag_name: "kernel-${{ github.run_number }}"
           body: |
-            ✅ build using **AOSP Clang r416183b**
+            ✅ Android kernel build using **AOSP Clang r416183b**
             - **ARCH:** arm64
             - **DEFCONFIG:** mikasa_defconfig
-            - **LOCALVERSION:** -mikasa
           files: release/*.img
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
