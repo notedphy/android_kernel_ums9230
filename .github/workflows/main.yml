@@ -1,4 +1,4 @@
-name: Build Android kernel
+name: Build Mikasa kernel
 
 on:
   workflow_dispatch:
@@ -6,66 +6,69 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # needed for creating release
+
 env:
-  # adjust these as needed
-  KERNEL_DIR: ${{ github.workspace }}        # path to kernel source (repo root by default)
+  KERNEL_DIR: ${{ github.workspace }}
   TOOLCHAIN_DIR: ${{ github.workspace }}/toolchain
   CLANG_TARBALL_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-12.0.0_r12/clang-r416183b.tar.gz
   DEFCONFIG: mikasa_defconfig
   ARCH: arm64
   OUTDIR: ${{ github.workspace }}/out
+  LOCALVERSION: -MIKASA•[ZTMY]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install host deps
+      - name: Install dependencies
         run: |
-          sudo apt update -y && sudo apt upgrade -y && sudo apt install apt-utils rlwrap dialog -y && sudo apt install libterm-readline-perl-perl -y && sudo apt install nano bc bison ca-certificates curl flex gcc git libc6-dev libssl-dev openssl python-is-python3 ssh wget zip zstd sudo make clang gcc-arm-linux-gnueabi software-properties-common build-essential libarchive-tools gcc-aarch64-linux-gnu -y && sudo apt install build-essential -y && sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev make gcc -y && sudo apt install pigz -y && sudo apt install python3 -y && sudo apt install cpio -y && sudo apt install lld -y && sudo apt install llvm -y && sudo apt-get install g++-aarch64-linux-gnu -y && sudo apt install libelf-dev -y 
-      - name: Download + extract AOSP Clang (r416183b)
+          sudo apt update -y && sudo apt upgrade -y && sudo apt install apt-utils rlwrap dialog -y && sudo apt install libterm-readline-perl-perl -y && sudo apt install nano bc bison ca-certificates curl flex gcc git libc6-dev libssl-dev openssl python-is-python3 ssh wget zip zstd sudo make clang gcc-arm-linux-gnueabi software-properties-common build-essential libarchive-tools gcc-aarch64-linux-gnu -y && sudo apt install build-essential -y && sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev make gcc -y && sudo apt install pigz -y && sudo apt install python3 -y && sudo apt install cpio -y && sudo apt install lld -y && sudo apt install llvm -y && sudo apt-get install g++-aarch64-linux-gnu -y && sudo apt install libelf-dev -y
+      - name: Download and extract AOSP Clang (r416183b)
         run: |
           mkdir -p "${{ env.TOOLCHAIN_DIR }}"
-          echo "Downloading clang from: $CLANG_TARBALL_URL"
-          wget -qO clang.tar.gz "$CLANG_TARBALL_URL"
+          echo "Downloading clang toolchain..."
+          wget -qO clang.tar.gz "${{ env.CLANG_TARBALL_URL }}"
           tar -xzf clang.tar.gz -C "${{ env.TOOLCHAIN_DIR }}" --strip-components=1
           rm clang.tar.gz
-          ls -lah "${{ env.TOOLCHAIN_DIR }}" | sed -n '1,20p'
+          echo "Extracted clang to ${{ env.TOOLCHAIN_DIR }}"
+          ls -lah "${{ env.TOOLCHAIN_DIR }}/bin" | head -n 20
 
-    - name: Prepare environment and build
+      - name: Build kernel Image
         run: |
           set -euo pipefail
           cd "${{ env.KERNEL_DIR }}"
-
           mkdir -p "${OUTDIR}"
 
           # ensure AOSP clang is first in PATH
           export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
 
-          # set environment
+          # setup env
           export ARCH=${{ env.ARCH }}
           export DEFCONFIG=${{ env.DEFCONFIG }}
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CLANG_TRIPLE=aarch64-linux-gnu-
-          export LOCALVERSION=-mikasa
+          export LOCALVERSION=${{ env.LOCALVERSION }}
           export CC=clang
           export LD=ld.lld
           export LLVM=1
           export LLVM_IAS=1
 
-          echo "=== Using Clang from toolchain dir ==="
+          echo "=== Checking toolchain ==="
           which clang
-          clang --version | head -n3
-
-          echo "=== Using ld.lld from toolchain dir ==="
+          clang --version | head -n 3
+          echo
           which ld.lld || true
 
-          echo "=== Building defconfig ==="
+          echo "=== Generating defconfig: $DEFCONFIG ==="
           make O="${OUTDIR}" ${DEFCONFIG}
 
           echo "=== Building kernel Image ==="
@@ -78,26 +81,28 @@ jobs:
             CROSS_COMPILE=${CROSS_COMPILE} \
             Image
 
-          # Copy output
+          echo "=== Build done ==="
+          ls -lh "${OUTDIR}/arch/arm64/boot/" || true
+
           mkdir -p "${{ github.workspace }}/release"
           cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
 
-      - name: List release files
-        run: ls -lah "${{ github.workspace }}/release"
-
       - name: Create GitHub Release and upload Image
-        # softprops/action-gh-release will create a release and upload files declared in `files`
         uses: softprops/action-gh-release@v1
         with:
-          name: "kernel-image-${{ github.run_number }}"
-          tag_name: "kernel-image-${{ github.run_number }}"
-          body: "Automated kernel build (clang-r416183b) - Image for ${DEFCONFIG}"
+          name: "Kernel Image build #${{ github.run_number }}"
+          tag_name: "kernel-${{ github.run_number }}"
+          body: |
+            Automated kernel build using AOSP Clang r416183b
+            - ARCH: arm64
+            - DEFCONFIG: mikasa_defconfig
+            - LOCALVERSION: -mikasa
           files: release/*.img
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload build artifact (fallback / for Actions UI)
+      - name: Upload artifact (optional)
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-image
+          name: kernel-Image
           path: release/*.img
