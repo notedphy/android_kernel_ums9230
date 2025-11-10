@@ -37,54 +37,50 @@ jobs:
           rm clang.tar.gz
           ls -lah "${{ env.TOOLCHAIN_DIR }}" | sed -n '1,20p'
 
-      - name: Prepare environment
-        # keep everything in one script so PATH and exports persist for build step
+    - name: Prepare environment and build
         run: |
           set -euo pipefail
           cd "${{ env.KERNEL_DIR }}"
 
-          # ensure out dir
           mkdir -p "${OUTDIR}"
 
-          # put clang toolchain first on PATH
+          # ensure AOSP clang is first in PATH
           export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
 
-          # Common vars for clang-based kernel builds
+          # set environment
           export ARCH=${{ env.ARCH }}
           export DEFCONFIG=${{ env.DEFCONFIG }}
-          # Use the AOSP/LLVM triple for target (adjust if you have a different cross prefix)
-          export CLANG_TRIPLE=aarch64-linux-gnu-
-          # CROSS_COMPILE may still be needed for helpers (binutils). If you provide separate cross toolchain,
-          # set CROSS_COMPILE to that prefix (e.g. aarch64-linux-gnu-). Here we rely on clang+ld from prebuilts.
           export CROSS_COMPILE=aarch64-linux-gnu-
-          export LOCALVERSION=-MIKASA•[ZTMY]
-          export PATH="${{ env.TOOLCHAIN_DIR }}/bin:${PATH}"
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export LOCALVERSION=-mikasa
+          export CC=clang
+          export LD=ld.lld
+          export LLVM=1
+          export LLVM_IAS=1
 
-          echo "Using PATH: $(which clang || true) ; clang version: $(clang --version | head -n1 || true)"
+          echo "=== Using Clang from toolchain dir ==="
+          which clang
+          clang --version | head -n3
 
-          # Create defconfig
+          echo "=== Using ld.lld from toolchain dir ==="
+          which ld.lld || true
+
+          echo "=== Building defconfig ==="
           make O="${OUTDIR}" ${DEFCONFIG}
 
-          # Build kernel Image (single-step build). Adjust -j as needed.
-          NPROCS=$(nproc --all || echo 2)
-          make -C . O="${OUTDIR}" -j${NPROCS} \
+          echo "=== Building kernel Image ==="
+          make -C . O="${OUTDIR}" -j$(nproc --all) \
             ARCH=${ARCH} \
-            CC=clang LLVM=1 \
+            CC=clang \
+            LD=ld.lld \
+            LLVM=1 LLVM_IAS=1 \
             CLANG_TRIPLE=${CLANG_TRIPLE} \
             CROSS_COMPILE=${CROSS_COMPILE} \
             Image
 
-          # copy result to workspace root with predictable name
+          # Copy output
           mkdir -p "${{ github.workspace }}/release"
-          if [ -f "${OUTDIR}/arch/arm64/boot/Image" ]; then
-            cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
-          else
-            echo "Error: built Image not found at ${OUTDIR}/arch/arm64/boot/Image"
-            ls -lah "${OUTDIR}/arch/arm64/boot" || true
-            exit 1
-          fi
-
-          echo "Image saved to release/Image-${GITHUB_RUN_NUMBER}.img"
+          cp "${OUTDIR}/arch/arm64/boot/Image" "${{ github.workspace }}/release/Image-${GITHUB_RUN_NUMBER}.img"
 
       - name: List release files
         run: ls -lah "${{ github.workspace }}/release"
