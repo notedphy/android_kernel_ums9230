@@ -1,13 +1,19 @@
-name: Build  Mikasa kernel 
+name: Build Android Kernel (arm64 - Clang r416183b)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    inputs:
+      with_kernelsu:
+        description: "Build with KernelSU Next (Sukisu)?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
-  contents: write  # Diperlukan untuk GitHub Release
+  contents: write
 
 env:
   KERNEL_DIR: ${{ github.workspace }}
@@ -36,20 +42,40 @@ jobs:
           sudo apt install nano bc bison ca-certificates curl flex gcc git libc6-dev libssl-dev openssl \
             python-is-python3 ssh wget zip zstd sudo make clang gcc-arm-linux-gnueabi software-properties-common \
             build-essential libarchive-tools gcc-aarch64-linux-gnu -y
-          sudo apt install build-essential -y
-          sudo apt install libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev \
-            libbz2-dev libsqlite3-dev make gcc -y
-          sudo apt install pigz python3 cpio lld llvm g++-aarch64-linux-gnu libelf-dev -y
+          sudo apt install build-essential libssl-dev libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev \
+            libbz2-dev libsqlite3-dev make gcc pigz python3 cpio lld llvm g++-aarch64-linux-gnu libelf-dev -y
 
-      - name: Download and extract AOSP Clang r416183b
+      - name: Download and extract AOSP Clang (r416183b)
         run: |
-          echo "Downloading AOSP clang toolchain..."
+          echo "Downloading AOSP Clang toolchain..."
           mkdir -p "${{ env.TOOLCHAIN_DIR }}"
           cd "${{ env.TOOLCHAIN_DIR }}"
-          # langsung extract tanpa file sementara
           curl -L "${{ env.CLANG_URL }}" | tar -xz
-          echo "Toolchain extracted:"
+          echo "Toolchain extracted successfully."
           ls -lah "${{ env.TOOLCHAIN_DIR }}/bin" | head -n 20
+
+      - name: Enable 4GB Swap
+        run: |
+          echo "Creating 4GB swap..."
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
+      - name: Optionally integrate KernelSU Next (Sukisu)
+        if: ${{ github.event.inputs.with_kernelsu == 'true' }}
+        run: |
+          echo "Integrating KernelSU Next (Sukisu)..."
+          cd "${{ env.KERNEL_DIR }}"
+          git clone --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU
+          cd KernelSU
+          git fetch origin main || true
+          git checkout main || git checkout master || true
+          cd ..
+          cp -r KernelSU/kernel/* .
+          echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ env.DEFCONFIG }}
+          echo "KernelSU-Next integrated successfully."
 
       - name: Build kernel Image (using AOSP clang)
         run: |
@@ -68,15 +94,15 @@ jobs:
           export LLVM=1
           export LLVM_IAS=1
 
-          echo "=== Checking Clang toolchain ==="
+          echo "=== Checking Clang Toolchain ==="
           "${CC}" --version | head -n 3
           "${LD}" --version | head -n 3
 
           echo "=== Generating defconfig: $DEFCONFIG ==="
           make O="${OUTDIR}" ${DEFCONFIG}
 
-          echo "=== Building kernel Image ==="
-          make -C . O="${OUTDIR}" -j$(nproc --all) \
+          echo "=== Building kernel Image (limited threads) ==="
+          make -C . O="${OUTDIR}" -j4 \
             ARCH=${ARCH} \
             CC="${CC}" \
             LD="${LD}" \
@@ -85,7 +111,7 @@ jobs:
             CROSS_COMPILE=${CROSS_COMPILE} \
             Image
 
-          echo "=== Build done ==="
+          echo "=== Build finished ==="
           ls -lh "${OUTDIR}/arch/arm64/boot/" || true
 
           mkdir -p "${{ github.workspace }}/release"
@@ -94,12 +120,14 @@ jobs:
       - name: Create GitHub Release and upload Image
         uses: softprops/action-gh-release@v1
         with:
-          name: "Kernel Image build #${{ github.run_number }}"
-          tag_name: "kernel-${{ github.run_number }}"
+          name: |
+            Kernel Image build #${{ github.run_number }}${{ github.event.inputs.with_kernelsu == 'true' && ' (with KernelSU Next)' || '' }}
+          tag_name: kernel-${{ github.run_number }}
           body: |
             ✅ Android kernel build using **AOSP Clang r416183b**
             - **ARCH:** arm64
             - **DEFCONFIG:** mikasa_defconfig
+            - **KernelSU Next:** ${{ github.event.inputs.with_kernelsu }}
           files: release/*.img
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
