@@ -22,7 +22,7 @@ obj-y += wait.o wait_bit.o swait.o completion.o
 
 obj-$(CONFIG_SMP) += sched_tp.o
 CFLAGS_sched_tp.o := -I$(src)
-
+obj-$(CONFIG_SCHED_BORE) += bore.o
 obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o topology.o stop_task.o pelt.o
 obj-$(CONFIG_SCHED_AUTOGROUP) += autogroup.o
 obj-$(CONFIG_SCHEDSTATS) += stats.o

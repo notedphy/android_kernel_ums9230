@@ -1,0 +1,6 @@
+config SCHED_BORE
+    bool "Bore Scheduler support"
+    depends on SMP
+    help
+      Enable Bore scheduler hooks for performance tuning.
+      Optimized for smoother gaming frame pacing and lower latency.

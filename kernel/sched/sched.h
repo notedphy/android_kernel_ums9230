@@ -877,6 +877,9 @@ DECLARE_STATIC_KEY_FALSE(sched_uclamp_used);
  * acquire operations must be ordered by ascending &runqueue.
  */
 struct rq {
+#ifdef CONFIG_SCHED_BORE
+	unsigned long bore_ticks;
+#endif
 	/* runqueue lock: */
 	raw_spinlock_t		lock;
 
@@ -2675,4 +2678,13 @@ static inline u64 sched_ktime_clock(void)
 {
 	return sched_clock();
 }
+#endif
+#ifdef CONFIG_SCHED_BORE
+extern void sched_post_fork_bore(struct task_struct *p);
+extern void task_tick_bore(struct rq *rq, struct task_struct *curr);
+extern void sched_tick_bore(struct rq *rq);
+#else
+static inline void sched_post_fork_bore(struct task_struct *p) { }
+static inline void task_tick_bore(struct rq *rq, struct task_struct *curr) { }
+static inline void sched_tick_bore(struct rq *rq) { }
 #endif
